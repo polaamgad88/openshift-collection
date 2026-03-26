@@ -1,31 +1,64 @@
-# OpenShift Day 2 Ansible Collection
+# OpenShift Day 2 Ansible Collection (`polaamgad88.openshift_day2`)
 
-This collection provides specialized modules for **OpenShift Day 2 Operations**, focusing on health checks, automated troubleshooting, and lifecycle management.
+This collection provides specialized Ansible modules designed for **OpenShift Day 2 Operations**. It moves beyond basic installation, focusing on deep-dive diagnostics, security auditing, resource optimization, and automated lifecycle management.
 
-## Key Features
-* **Clusterless Testing:** Includes a "Mock Mode" to test logic without a live OpenShift cluster.
-* **Health Monitoring:** Identifies degraded ClusterOperators and node pressures.
-* **Modular Design:** Each module is a single-purpose "chunk" for easy integration.
+---
 
-## Current Modules
-* `ocp_cluster_health`: Validates the status of all OpenShift ClusterOperators.
+##  Key Features
 
-## Project Roadmap (Modules in Development)
-I am currently working on expanding this collection with the following "chunks":
+* **Infrastructure Health:** Real-time analysis of ClusterOperators and Node pressures.
+* **Security First:** Automated auditing of TLS certificate expiration across all namespaces.
+* **Capacity Planning:** Accurate memory commitment ratios (Requests vs. Allocatable) to prevent OOM evictions.
+* **Human-Centric Output:** Pre-formatted diagnostic tables designed for SREs and Admins.
 
-###  Health & Diagnostics
-* `ocp_node_condition_info`: Identify nodes with Disk, Memory, or PID pressure.
-* `ocp_pod_restart_check`: Detect pods in CrashLoopBackOff with high restart counts.
-* `ocp_etcd_health_info`: Verify ETCD quorum and leader stability.
+---
 
-###  Patching & Maintenance
-* `ocp_mcp_wait`: Wait for MachineConfigPools to complete node reboots/updates.
-* `ocp_olm_update_check`: Identify Operators with pending or failed InstallPlans.
+##  Current Modules
 
-###  Upgrade Lifecycle
-* `ocp_upgrade_available_info`: Analyze valid and conditional upgrade paths.
-* `ocp_api_v1beta1_detector`: Scan for deprecated APIs before cluster upgrades.
+### 1. `ocp_cluster_health`
+Validates the status of all OpenShift ClusterOperators, highlighting **Degraded** or **Non-Available** components.
 
-###  Resource Optimization
-* `ocp_pvc_usage_info`: Report on Persistent Volume Claims nearing capacity.
-* `ocp_cert_report_info`: Audit internal and ingress certificates for upcoming expiry.
+### 2. `ocp_worker_node_resource_info`
+Analyzes node capacity and pod resource requests.
+* Calculates **Commitment Ratio %**.
+* Identifies nodes under high memory pressure.
+* Supports filtering by roles (`worker`, `master`, or `all`).
+
+### 3. `ocp_secret_expiry_info`
+A security auditor that scans secrets (`tls.crt`, `ca.crt`) across the cluster.
+* Decodes certificates on the fly.
+* Reports days remaining until expiry.
+* Flags expired certificates (like the critical `pprof-cert`).
+
+### 4. `ocp_token_get`
+A utility module to exchange LDAP/HTPasswd credentials for a temporary OAuth Bearer token.
+
+---
+
+## Project Roadmap (In Development)
+
+I am expanding this collection into a full-scale **OpenShift Automation Factory**. The following modules are currently under development:
+
+### Identity & Access Management (IAM)
+* **`ocp_idp_ldap_setup`**: Seamless integration with LDAP/Active Directory including CA certificate injection.
+* **`ocp_local_admin_manager`**: Automated `htpasswd` provider creation and secure deletion of the default `kubeadmin` account.
+
+### Storage Administration (Data)
+* **`ocp_odf_provisioner`**: Full-stack installation of OpenShift Data Foundation (ODF).
+* **`ocp_storage_disk_manager`**: Automated disk identification and `LocalVolume` CR creation for local storage clusters.
+
+### Observability & Logging
+* **`ocp_logging_stack_deploy`**: One-click deployment of the Cluster Logging operator and Loki stack.
+* **`ocp_log_forwarder_config`**: Seamless configuration of log forwarding to external targets (Elasticsearch, Kafka, Splunk).
+
+### Multi-Cluster Operations (ACM)
+* **`ocp_acm_import`**: Automates the joining process for importing managed clusters into an ACM Hub.
+* **`ocp_submariner_gateway`**: Configuration and verification of cross-cluster networking.
+
+---
+
+### Installation & Usage
+
+### Install from Ansible Galaxy
+```bash
+ansible-galaxy collection install polaamgad88.openshift_day2
