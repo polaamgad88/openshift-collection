@@ -1,0 +1,18 @@
+---
+- name: OpenShift Token Retrieval
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Get authentication token from OpenShift
+      ocp_token_get:
+        host: "https://api.ocp4.linuxp.local:6443"
+        username: "wahba"
+        password: "admin"
+        verify_ssl: false
+      register: auth_output
+
+    - name: Show my new token
+      debug:
+        msg: "The retrieved token is: {{ auth_output.ocp_token }}"

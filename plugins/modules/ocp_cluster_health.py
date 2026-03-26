@@ -1,79 +1,75 @@
 #!/usr/bin/python
-
-# In Ansible modules, this is almost always /usr/bin/python.
+# -*- coding: utf-8 -*-
 
 from ansible.module_utils.basic import AnsibleModule
-import json
-import os
+import requests
+try:
+    from kubernetes import client
+    from openshift.dynamic import DynamicClient
+    HAS_K8S = True
+except ImportError:
+    HAS_K8S = False
+
+def get_token(api_url, username, password, verify_ssl):
+    """Internal helper to get token if user/pass are provided directly."""
+    oauth_url = api_url.replace("api.", "oauth-openshift.apps.").replace(":6443", "")
+    token_url = f"{oauth_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
+    headers = {'X-CSRF-Token': '1'}
+    try:
+        res = requests.get(token_url, auth=(username, password), headers=headers, verify=verify_ssl, allow_redirects=False)
+        if res.status_code == 302 and 'Location' in res.headers:
+            return res.headers['Location'].split('access_token=')[1].split('&')[0]
+        return None
+    except Exception:
+        return None
 
 def run_module():
-    """
-    Main function for the Ansible module logic.
-    """
-
-    # 1. Define the Module Arguments (Inputs)
-    # This dictionary defines what the user can pass in the YAML playbook.
     module_args = dict(
-        test_mode=dict(type='bool', default=False),  # Toggle for mock testing
-        mock_path=dict(type='str', required=False)   # Path to the fake JSON file
+        host=dict(type='str', required=True),
+        api_key=dict(type='str', required=False, no_log=True),
+        username=dict(type='str', required=False),
+        password=dict(type='str', required=False, no_log=True),
+        verify_ssl=dict(type='bool', default=False)
     )
 
-    # 2. Initialize the AnsibleModule object
-    # This object handles communication between your script and Ansible.
-    module = AnsibleModule(
-        argument_spec=module_args,
-        supports_check_mode=True  # Tells Ansible this module doesn't make "real" changes
-    )
+    module = AnsibleModule(argument_spec=module_args)
+    result = dict(changed=False, degraded_operators=[], total_checked=0)
 
-    # 3. Initialize the Result Dictionary
-    # Everything in this dict will be sent back to the user in the 'register' variable.
-    result = dict(
-        changed=False,             # Day 2 "Read" modules usually return False for changed
-        degraded_operators=[],     # A list to hold any issues we find
-        total_checked=0            # Metadata to show the user how much work was done
-    )
+    if not HAS_K8S:
+        module.fail_json(msg="Python libraries 'kubernetes' and 'openshift' are required.")
 
-    # 4. Data Acquisition (Mock vs. Real)
-    if module.params['test_mode']:
-        # --- MOCK LOGIC ---
-        path = module.params['mock_path']
+    # --- AUTH LOGIC ---
+    token = None
+    if module.params['api_key']:
+        token = module.params['api_key']
+    elif module.params['username'] and module.params['password']:
+        token = get_token(module.params['host'], module.params['username'], module.params['password'], module.params['verify_ssl'])
+    
+    if not token:
+        module.fail_json(msg="Authentication failed: Provide either api_key OR username/password.")
+
+    try:
+        conf = client.Configuration()
+        conf.host = module.params['host']
+        conf.verify_ssl = module.params['verify_ssl']
+        conf.api_key = {"authorization": f"Bearer {token}"}
         
-        # Validation: Ensure the mock file exists before trying to read it
-        if not path or not os.path.exists(path):
-            module.fail_json(msg=f"Mock mode is ON, but file was not found at: {path}")
-        
-        try:
-            with open(path, 'r') as f:
-                data = json.load(f)
-        except Exception as e:
-            module.fail_json(msg=f"Failed to parse JSON from mock file: {str(e)}")
-    else:
-        # --- REAL LOGIC ---
-        # This is where you will eventually add the OpenShift API client code.
-        module.fail_json(msg="Real cluster connection is not yet implemented. Please use test_mode: true.")
+        dyn_client = DynamicClient(client.ApiClient(conf))
+        co_api = dyn_client.resources.get(api_version='v1', kind='ClusterOperator', group='config.openshift.io')
+        data = co_api.get().to_dict()
 
-    # 5. The "Business Logic" (Processing the Data)
-    # OpenShift ClusterOperators return data in an 'items' list.
-    items = data.get('items', [])
-    result['total_checked'] = len(items)
+        items = data.get('items', [])
+        result['total_checked'] = len(items)
+        for item in items:
+            name = item.get('metadata', {}).get('name', 'unknown')
+            conditions = item.get('status', {}).get('conditions', [])
+            for cond in conditions:
+                if cond.get('type') == 'Degraded' and cond.get('status') == 'True':
+                    result['degraded_operators'].append(name)
 
-    for item in items:
-        # Get the name of the operator (e.g., 'console', 'image-registry')
-        name = item.get('metadata', {}).get('name', 'unknown')
-        
-        # Dig into the 'status.conditions' list
-        conditions = item.get('status', {}).get('conditions', [])
-        
-        # Look for a condition where Type is 'Degraded' and Status is 'True'
-        for condition in conditions:
-            if condition.get('type') == 'Degraded' and condition.get('status') == 'True':
-                # If found, add it to our results list
-                result['degraded_operators'].append(name)
-
-    # 6. Exit and Return Results
-    # Use exit_json to send the dictionary back to Ansible.
-    module.exit_json(**result)
+        module.exit_json(**result)
+    except Exception as e:
+        module.fail_json(msg=f"API Error: {str(e)}")
 
 if __name__ == '__main__':
-    # Standard Python entry point
     run_module()

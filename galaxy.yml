@@ -1,0 +1,20 @@
+namespace: "polaamgad88"
+name: "openshift_day2"
+version: "1.0.2"
+readme: "README.md"
+authors:
+  - "Adel Amgad <aamgad@redhat.com>"
+description: "Professional collection for OpenShift Day 2 health checks and diagnostics."
+license:
+  - "GPL-2.0-or-later"
+tags:
+  - openshift
+  - monitoring
+  - day2
+repository: "https://github.com/polaamgad88/openshift-collection"
+documentation: "https://github.com/polaamgad88/openshift-collection"
+homepage: "https://github.com/polaamgad88/openshift-collection"
+issues: "https://github.com/polaamgad88/openshift-collection/issues"
+build_ignore:
+  - "*.gz"
+  - ".git*"

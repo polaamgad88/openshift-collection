@@ -1,0 +1,17 @@
+---
+- name: Test Way 2 - Credentials Based
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Check Health using User/Pass directly
+      ocp_cluster_health:
+        host: "https://api.ocp4.linuxp.local:6443"
+        username: "wahba"
+        password: "admin"
+        verify_ssl: false
+      register: health
+
+    - debug:
+        var: health.total_checked

@@ -1,0 +1,23 @@
+---
+- name: Test Way 1 - Token Based
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Get Token
+      ocp_token_get:
+        host: "https://api.ocp4.linuxp.local:6443"
+        username: "wahba"
+        password: "admin"
+      register: auth
+
+    - name: Check Health using Token
+      ocp_cluster_health:
+        host: "https://api.ocp4.linuxp.local:6443"
+        api_key: "{{ auth.ocp_token }}"
+        verify_ssl: false
+      register: health
+    
+    - debug:
+        var: health.total_checked

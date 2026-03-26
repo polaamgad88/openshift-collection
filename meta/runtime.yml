@@ -1,0 +1,7 @@
+---
+requires_ansible: ">=2.15.0"
+plugin_routing:
+  modules:
+    ocp_cluster_health:
+      deprecation:
+        warning_text: "None"

@@ -1,0 +1,32 @@
+---
+- name: OpenShift Cluster Health Check
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ocp_api: "https://api.ocp4.linuxp.local:6443"
+
+  tasks:
+    - name: 1. Login and get Token
+      ocp_token_get:
+        host: "{{ ocp_api }}"
+        username: "wahba"
+        password: "admin"
+        verify_ssl: false
+      register: auth
+
+    - name: 2. Check ClusterOperator Health
+      ocp_cluster_health:
+        host: "{{ ocp_api }}"
+        api_key: "{{ auth.ocp_token }}"  # Use the token from task 1
+        verify_ssl: false
+      register: health_result
+
+    - name: 3. Display Health Summary
+      debug:
+        msg: 
+          - "Total Operators Checked: {{ health_result.total_checked }}"
+          - "Degraded Operators: {{ health_result.degraded_operators }}"
+      # This makes the playbook "Fail" if any operator is degraded
+      failed_when: health_result.degraded_operators | length > 0
