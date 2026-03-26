@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "metadata": {"name": "authentication"},
+      "status": {"conditions": [{"type": "Degraded", "status": "False"}]}
+    },
+    {
+      "metadata": {"name": "console"},
+      "status": {"conditions": [{"type": "Degraded", "status": "True"}]}
+    }
+  ]
+}

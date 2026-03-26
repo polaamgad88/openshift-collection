@@ -1,0 +1,15 @@
+---
+- name: Test Day 2 Collection
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Run my custom health module in mock mode
+      my_namespace.openshift_day2.ocp_cluster_health:
+        test_mode: true
+        # This tells the module where to find your fake data
+        mock_path: "/root/ansible_collections/my_namespace/openshift_day2/tests/mock_data/cluster_operators.json"
+      register: result
+
+    - name: Show the results
+      debug:
+        var: result.degraded_operators
