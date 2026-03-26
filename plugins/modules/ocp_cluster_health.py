@@ -39,7 +39,7 @@ options:
         type: bool
         default: false
 author:
-    - Pola Amgad (@polaamgad88)
+    - Adel Amgad Messiha (aamgad@redhat.com)
 '''
 
 EXAMPLES = r'''
