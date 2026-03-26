@@ -1,0 +1,19 @@
+---
+- name: Professional OCP Analysis
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Run Analytics
+      ocp_worker_node_resource_info:
+        host: "https://api.ocp4.linuxp.local:6443"
+        username: "wahba"
+        password: "admin"
+        verify_ssl: false
+        target_role: "worker"
+      register: analysis
+
+    - name: Display Diagnostic Report
+      debug:
+        msg: "{{ analysis.report_lines }}"

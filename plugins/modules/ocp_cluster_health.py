@@ -10,7 +10,6 @@ try:
 except ImportError:
     HAS_K8S = False
 
-# --- GALAXY DOCUMENTATION START ---
 DOCUMENTATION = r'''
 ---
 module: ocp_cluster_health
@@ -67,10 +66,8 @@ total_checked:
     returned: always
     type: int
 '''
-# --- GALAXY DOCUMENTATION END ---
 
 def get_token(api_url, username, password, verify_ssl):
-    # ... (Your existing get_token logic here) ...
     oauth_url = api_url.replace("api.", "oauth-openshift.apps.").replace(":6443", "")
     token_url = f"{oauth_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
     headers = {'X-CSRF-Token': '1'}
@@ -83,7 +80,6 @@ def get_token(api_url, username, password, verify_ssl):
         return None
 
 def run_module():
-    # ... (Rest of your run_module code here) ...
     module_args = dict(
         host=dict(type='str', required=True),
         api_key=dict(type='str', required=False, no_log=True),
@@ -93,7 +89,6 @@ def run_module():
     )
 
     module = AnsibleModule(argument_spec=module_args)
-    # ... [Keep your logic exactly as it was] ...
     result = dict(changed=False, degraded_operators=[], total_checked=0)
 
     if not HAS_K8S:
@@ -104,7 +99,7 @@ def run_module():
         token = module.params['api_key']
     elif module.params['username'] and module.params['password']:
         token = get_token(module.params['host'], module.params['username'], module.params['password'], module.params['verify_ssl'])
-    
+
     if not token:
         module.fail_json(msg="Authentication failed: Provide either api_key OR username/password.")
 
@@ -113,7 +108,7 @@ def run_module():
         conf.host = module.params['host']
         conf.verify_ssl = module.params['verify_ssl']
         conf.api_key = {"authorization": f"Bearer {token}"}
-        
+
         dyn_client = DynamicClient(client.ApiClient(conf))
         co_api = dyn_client.resources.get(api_version='v1', kind='ClusterOperator', group='config.openshift.io')
         data = co_api.get().to_dict()
