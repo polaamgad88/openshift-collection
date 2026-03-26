@@ -10,8 +10,67 @@ try:
 except ImportError:
     HAS_K8S = False
 
+# --- GALAXY DOCUMENTATION START ---
+DOCUMENTATION = r'''
+---
+module: ocp_cluster_health
+short_description: Check OpenShift ClusterOperator health status
+description:
+    - This module checks the status of OpenShift ClusterOperators.
+    - It supports authentication via API Key or Username/Password.
+options:
+    host:
+        description: The OpenShift API URL (e.g., https://api.cluster.example.com:6443).
+        type: str
+        required: true
+    api_key:
+        description: A valid OpenShift API token.
+        type: str
+        no_log: true
+    username:
+        description: OpenShift username (used if api_key is not provided).
+        type: str
+    password:
+        description: OpenShift password (used if api_key is not provided).
+        type: str
+        no_log: true
+    verify_ssl:
+        description: Whether to verify the SSL certificate of the API.
+        type: bool
+        default: false
+author:
+    - Pola Amgad (@polaamgad88)
+'''
+
+EXAMPLES = r'''
+- name: Check health using credentials
+  polaamgad88.openshift_day2.ocp_cluster_health:
+    host: "https://api.mycluster.com:6443"
+    username: "admin"
+    password: "password123"
+    verify_ssl: false
+
+- name: Check health using an API token
+  polaamgad88.openshift_day2.ocp_cluster_health:
+    host: "https://api.mycluster.com:6443"
+    api_key: "sha256~xxxxxx"
+'''
+
+RETURN = r'''
+degraded_operators:
+    description: List of operators currently in a Degraded state.
+    returned: always
+    type: list
+    sample: ["authentication", "console"]
+total_checked:
+    description: Total number of ClusterOperators scanned.
+    returned: always
+    type: int
+'''
+# --- GALAXY DOCUMENTATION END ---
+
 def get_token(api_url, username, password, verify_ssl):
-    """Internal helper to get token if user/pass are provided directly."""
+    # ... (Your existing get_token logic here) ...
     oauth_url = api_url.replace("api.", "oauth-openshift.apps.").replace(":6443", "")
     token_url = f"{oauth_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
     headers = {'X-CSRF-Token': '1'}
@@ -24,6 +83,7 @@ def get_token(api_url, username, password, verify_ssl):
         return None
 
 def run_module():
+    # ... (Rest of your run_module code here) ...
     module_args = dict(
         host=dict(type='str', required=True),
         api_key=dict(type='str', required=False, no_log=True),
@@ -33,12 +93,12 @@ def run_module():
     )
 
     module = AnsibleModule(argument_spec=module_args)
+    # ... [Keep your logic exactly as it was] ...
     result = dict(changed=False, degraded_operators=[], total_checked=0)
 
     if not HAS_K8S:
         module.fail_json(msg="Python libraries 'kubernetes' and 'openshift' are required.")
 
-    # --- AUTH LOGIC ---
     token = None
     if module.params['api_key']:
         token = module.params['api_key']
