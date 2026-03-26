@@ -16,17 +16,71 @@ DOCUMENTATION = r'''
 module: ocp_worker_node_resource_info
 short_description: Professional OpenShift Node Resource Analytics
 description:
-    - Provides a high-level, human-readable report of worker node memory commitment.
-    - Calculates Requests vs Allocatable capacity.
+    - This module provides a high-level, human-readable report of node resource commitment.
+    - It specifically calculates the ratio between Pod Memory Requests (falling back to Limits) and the Node's Allocatable capacity.
+    - This is a critical Day 2 operation for capacity planning and preventing OOM (Out of Memory) events.
 options:
-    host: {type: str, required: true}
-    username: {type: str}
-    password: {type: str, no_log: true}
-    api_key: {type: str, no_log: true}
-    verify_ssl: {type: bool, default: false}
-    target_role: {type: str, default: worker}
+    host:
+        description: The OpenShift API URL (e.g., https://api.cluster.example.com:6443).
+        type: str
+        required: true
+    username:
+        description: OpenShift username for authentication.
+        type: str
+    password:
+        description: OpenShift password for authentication.
+        type: str
+        no_log: true
+    api_key:
+        description: A valid OpenShift API token.
+        type: str
+        no_log: true
+    verify_ssl:
+        description: Whether to verify the SSL certificate of the API.
+        type: bool
+        default: false
+    target_role:
+        description: 
+            - The role of nodes to analyze.
+            - Use 'worker' to see application nodes, 'master' for control plane, or 'all' for a full cluster report.
+        type: str
+        default: worker
+author:
+    - Adel Amgad Messiha (@polaamgad88)
 '''
 
+EXAMPLES = r'''
+- name: Analyze Worker Nodes using credentials
+  polaamgad88.openshift_day2.ocp_worker_node_resource_info:
+    host: "https://api.mycluster.com:6443"
+    username: "admin"
+    password: "password123"
+    verify_ssl: false
+    target_role: "worker"
+
+- name: Analyze All Nodes in the cluster using a token
+  polaamgad88.openshift_day2.ocp_worker_node_resource_info:
+    host: "https://api.mycluster.com:6443"
+    api_key: "sha256~xxxxxx"
+    target_role: "all"
+'''
+
+RETURN = r'''
+worker_analysis:
+    description: A dictionary of node names containing detailed analytics.
+    returned: always
+    type: dict
+    sample: { "worker-0": { "usage_pct": 80.5, "status": "Healthy" } }
+report_lines:
+    description: A list of strings representing a pre-formatted human-readable table.
+    returned: always
+    type: list
+    sample: ["NODE NAME | PODS | ALLOC(GB)..."]
+summary:
+    description: General cluster stats.
+    returned: always
+    type: dict
+'''
 def get_token(api_url, username, password, verify_ssl):
     oauth_url = api_url.replace("api.", "oauth-openshift.apps.").replace(":6443", "")
     token_url = f"{oauth_url}/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
