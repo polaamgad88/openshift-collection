@@ -15,3 +15,4 @@ To see the module in action without a cluster, run the provided test playbook:
 
 ```bash
 ansible-playbook playbook-health-check.yml
+# openshift-collection
