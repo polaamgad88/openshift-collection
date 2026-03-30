@@ -1,6 +1,6 @@
 namespace: "polaamgad88"
 name: "openshift_day2"
-version: "1.0.5"
+version: 
 readme: "README.md"
 authors:
   - "Adel Amgad Messiha <aamgad@redhat.com>"
@@ -11,10 +11,10 @@ tags:
   - openshift
   - monitoring
   - day2
-repository: "https://github.com/polaamgad88/openshift-collection"
-documentation: "https://github.com/polaamgad88/openshift-collection"
-homepage: "https://github.com/polaamgad88/openshift-collection"
-issues: "https://github.com/polaamgad88/openshift-collection/issues"
+repository: https://github.com/polaamgad88/openshift-collection
+documentation: https://github.com/polaamgad88/openshift-collection/blob/main/README.md
+homepage: https://github.com/polaamgad88/openshift-collection
+issues: https://github.com/polaamgad88/openshift-collection/issues
 build_ignore:
   - "*.gz"
   - ".git*"
