@@ -1,6 +1,6 @@
 namespace: "polaamgad88"
 name: "openshift_day2"
-version: 
+version: .1
 readme: "README.md"
 authors:
   - "Adel Amgad Messiha <aamgad@redhat.com>"
